@@ -60,3 +60,9 @@ function elixinol1_custom_variation_price( $price, $product ) {
 	return $price;
 }
 
+add_filter('tiny_mce_before_init', 'ag_tinymce_paste_as_text');
+function ag_tinymce_paste_as_text( $init ) {
+	$init['paste_as_text'] = true;
+	return $init;
+}
+
