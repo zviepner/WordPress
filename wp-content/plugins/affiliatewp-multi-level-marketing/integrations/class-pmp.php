@@ -97,8 +97,8 @@ class AffiliateWP_MLM_PMP extends AffiliateWP_MLM_Base {
 		$order_id = $data['reference'];
 		
 		// Get order object by order id
-		$morder = new MemberOrder();
-		apply_filters( 'affwp_get_pmp_order', $morder->getMemberOrderByID( $order_id ), $morder );
+		$morder = new MemberOrder( $order_id );
+		apply_filters( 'affwp_get_pmp_order', $morder );
 		
 		$membership_level = $morder->membership_id;
 		$reference = $morder->id;

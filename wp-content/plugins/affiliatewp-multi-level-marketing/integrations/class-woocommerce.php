@@ -24,6 +24,11 @@ class AffiliateWP_MLM_WooCommerce extends AffiliateWP_MLM_Base {
 		$integrations = affiliate_wp()->settings->get( 'affwp_mlm_integrations' );
 				
 		if ( ! isset( $integrations['woocommerce'] ) ) return; // MLM integration for WooCommerce is disabled 
+
+		// Per-Product MLM Settings
+		add_filter( 'woocommerce_product_data_tabs', array( $this, 'product_tab' ) );
+		add_action( 'woocommerce_product_data_panels', array( $this, 'product_settings' ), 100 );
+		add_action( 'save_post', array( $this, 'save_meta' ) );		
 		
 		add_action( 'woocommerce_order_status_completed', array( $this, 'mark_referrals_complete' ), 5 );
 		add_action( 'woocommerce_order_status_processing', array( $this, 'mark_referrals_complete' ), 5 );
@@ -257,6 +262,248 @@ class AffiliateWP_MLM_WooCommerce extends AffiliateWP_MLM_Base {
 
 	}
 
+	/**
+	 * Get the Per-Level Rates for a given product
+	 *
+	 * @access public
+	 * @since 1.1.3
+	 * @return array
+	 */
+	public function get_int_product_level_rates( $product_id = 0 ) {
+		$rates = get_post_meta( $product_id, '_affwp_mlm_' . $this->context . '_product_rates', true );
+		$rates = is_array( $rates ) ? array_values( $rates ) : array();
+		return apply_filters( 'affwp_mlm_wc_product_level_rates', $rates );
+	}
+
+	/**
+	 * Get the Per-Level Rates Table
+	 *
+	 * @access public
+	 * @since 1.1.3
+	 * @return void
+	 */	
+	public function product_level_rates_table( $product_id = 0 ) {
+
+		$rates = $this->get_int_product_level_rates( $product_id );
+		$count = count( $rates );
+									
+?>
+		<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			$('.affwp_mlm_remove_product_rate').on('click', function(e) {
+				e.preventDefault();
+				$(this).parent().parent().remove();
+			});
+
+			$('#affwp_mlm_new_product_rate').on('click', function(e) {
+
+				e.preventDefault();
+
+				var row = $('#affiliatewp-mlm-product-rates tbody tr:last');
+
+				clone = row.clone();
+
+				var count = $('#affiliatewp-mlm-product-rates tbody tr').length;
+
+				clone.find( 'td input' ).val( '' );
+				clone.find( 'input' ).each(function() {
+					var name = $( this ).attr( 'name' );
+
+					name = name.replace( /\[(\d+)\]/, '[' + parseInt( count ) + ']');
+
+					$( this ).attr( 'name', name ).attr( 'id', name );
+				});
+
+				clone.insertAfter( row );
+
+			});
+		});
+		</script>
+		<style type="text/css">
+		#affiliatewp-mlm-product-rates th { padding-left: 10px; }
+		.affwp_mlm_remove_product_rate { margin: 8px 0 0 0; cursor: pointer; width: 10px; height: 10px; display: inline-block; text-indent: -9999px; overflow: hidden; }
+		.affwp_mlm_remove_product_rate:active, .affwp_mlm_remove_product_rate:hover { background-position: -10px 0!important }
+		</style>
+		<form id="affiliatewp-mlm-product-rates-form">
+			<p>Per-Level Product Rates</p>
+			<table id="affiliatewp-mlm-product-rates" class="form-table wp-list-table widefat fixed posts">
+				<thead>
+					<tr>
+						<th style="width: 20%; text-align: center;"><?php _e( 'Level', 'affiliatewp-multi-level-marketing' ); ?></th>
+						<th style="width: 60%; text-align: center;"><?php _e( 'Commission Rate', 'affiliatewp-multi-level-marketing' ); ?></th>
+						<th style="width: 20%;"><?php _e( 'Delete', 'affiliatewp-multi-level-marketing' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+                	<?php if( $rates ) :
+							$level_count = 0; 
+							
+							foreach( $rates as $key => $rate ) : 
+								$level_count++;
+							?>
+							<tr>
+								<td style="font-size: 18px; text-align: center;">
+									<?php 
+									
+										if( ! empty( $level_count ) ) {
+											echo $level_count;
+										} else{
+											echo '0';
+										}
+									
+									?>
+								</td>
+								<td>
+									<input name="_affwp_mlm_woocommerce_product_rates[<?php echo $key; ?>][rate]" type="text" value="<?php echo esc_attr( $rate['rate'] ); ?>" style="width: 100%;" />
+								</td>
+								<td>
+									<a href="#" class="affwp_mlm_remove_product_rate" style="background: url(<?php echo admin_url('/images/xit.gif'); ?>) no-repeat;">&times;</a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					<?php else : ?>
+						<tr>
+							<td colspan="3" style="text-align: center;"><?php _e( 'No level rates created yet', 'affiliatewp-multi-level-marketing' ); ?></td>
+						</tr>
+					<?php endif; ?>
+                    <?php if( empty( $rates ) ) : ?>
+                        <tr>
+                            <td style="font-size: 18px; text-align: center;">
+                                        <?php 
+                                            if( ! empty( $level_count ) ) {
+                                                echo $level_count;
+                                            } else{
+                                                echo '0';
+                                            }
+                                        ?>
+                            </td>
+                            <td>
+                                <input name="_affwp_mlm_woocommerce_product_rates[<?php echo $count; ?>][rate]" type="text" value=""/>
+                            </td>
+                            <td>
+                                <a href="#" class="affwp_mlm_remove_product_rate" style="background: url(<?php echo admin_url('/images/xit.gif'); ?>) no-repeat;">&times;</a>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+				</tbody>
+				<tfoot>
+					<tr>
+						<th colspan="3">
+							<button id="affwp_mlm_new_product_rate" name="affwp_mlm_new_product_rate" class="button" style="width: 100%; height: 110%;"><?php _e( 'Add New Rate', 'affiliatewp-multi-level-marketing' ); ?></button>
+						</th>
+					</tr>
+				</tfoot>
+			</table>
+            <p style="margin-top: 10px;"><?php _e( 'Add rates from low to high', 'affiliatewp-multi-level-marketing' ); ?></p>
+		</form>
+<?php
+	}	
+	
+	/**
+	 * Register the product settings tab
+	 *
+	 * @access  public
+	 * @since   1.1.3
+	*/
+	public function product_tab( $tabs ) {
+		$tabs['affiliatewp_mlm'] = array(
+			'label'  => __( 'AffiliateWP MLM', 'affiliatewp-multi-level-marketing' ),
+			'target' => 'affwp_product_mlm_settings',
+			'class'  => array( ),
+		);
+		return $tabs;
+	}	
+	
+	/**
+	 * Adds per-product mlm settings input fields
+	 *
+	 * @access  public
+	 * @since   1.1.3
+	*/
+	public function product_settings() {
+		global $post;
+?>
+		<div id="affwp_product_mlm_settings" class="panel woocommerce_options_panel">
+
+			<div class="options_group">
+				<p><?php _e( 'Setup mlm settings for this product', 'affiliatewp-multi-level-marketing' ); ?></p>
+<?php	
+			
+				$product_id = $post->ID;
+				$this->product_level_rates_table( $product_id );
+			
+			/*
+				woocommerce_wp_checkbox( array(
+					'id'          => '_affwp_mlm_woocommerce_indirect_referrals_disabled',
+					'label'       => __( 'Disable Indirect Referrals', 'affiliatewp-multi-level-marketing' ),
+					'description' => __( 'This will prevent orders of this product from generating Indirect Referral commissions for affiliates.', 'affiliatewp-multi-level-marketing' ),
+					'cbvalue'     => 1
+				) );
+
+			*/
+				wp_nonce_field( 'affwp_mlm_woo_product_nonce', 'affwp_mlm_woo_product_nonce' );
+?>
+			</div>
+		</div>
+<?php
+	}
+	
+	/**
+	 * Saves per-product mlm settings input fields
+	 *
+	 * @access  public
+	 * @since   1.1.3
+	*/
+	public function save_meta( $post_id = 0 ) {
+		
+		// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return $post_id;
+		}
+		
+		// Don't save revisions and autosaves
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return $post_id;
+		}
+		
+		if ( empty( $_POST['affwp_mlm_woo_product_nonce'] ) || ! wp_verify_nonce( $_POST['affwp_mlm_woo_product_nonce'], 'affwp_mlm_woo_product_nonce' ) ) {
+			return $post_id;
+		}
+		
+		$post = get_post( $post_id );
+		
+		if ( ! $post ) {
+			return $post_id;
+		}
+		
+		// Check post type is product
+		if ( 'product' != $post->post_type ) {
+			return $post_id;
+		}
+		
+		// Check user permission
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return $post_id;
+		}
+
+		// Save Per-Level Rates Fields
+		if ( ! empty( $_POST['_affwp_mlm_' . $this->context . '_product_rates'] ) ) {
+			$rates = $_POST['_affwp_mlm_' . $this->context . '_product_rates'];
+			update_post_meta( $post_id, '_affwp_mlm_' . $this->context . '_product_rates', $rates );
+		} else {
+			delete_post_meta( $post_id, '_affwp_mlm_' . $this->context . '_product_rates' );
+		}
+		
+		/* Save Disable Indirect Referrals Field
+		if ( ! empty( $_POST['_affwp_mlm_' . $this->context . '_indirect_referrals_disabled'] ) ) {
+			$disabled = $_POST['_affwp_mlm_' . $this->context . '_indirect_referrals_disabled'];
+			update_post_meta( $post_id, '_affwp_mlm_' . $this->context . '_indirect_referrals_disabled', $disabled );
+		} else {
+			delete_post_meta( $post_id, '_affwp_mlm_' . $this->context . '_indirect_referrals_disabled' );
+		}		
+		*/
+		
+	}	
 
 
 }

@@ -5,7 +5,7 @@
  * Description: Turn your Affiliate Network into a full blown Multi-Level Marketing system, where your Affiliates can earn commissions on the referrals made by their Sub Affiliates on multiple levels.
  * Author: Christian Freeman
  * Author URI: http://theperfectplugin.com
- * Version: 1.1.2
+ * Version: 1.1.3
  * Text Domain: affiliatewp-multi-level-marketing
  * Domain Path: languages
  */
@@ -20,7 +20,7 @@ class AFFWP_MLM_License {
 		if ( ! class_exists( 'AFFWP_MLM_License_Menu' ) ) {
 			require_once( plugin_dir_path( __FILE__ ) . 'am-license-menu.php' );
 			
-			AFFWP_MLM_License_Menu::instance( __FILE__, 'AffiliateWP MLM', '1.1.2', 'plugin', 'http://propluginmarketplace.com' );
+			AFFWP_MLM_License_Menu::instance( __FILE__, 'AffiliateWP MLM', '1.1.3', 'plugin', 'http://propluginmarketplace.com' );
 		}
 	}
 
@@ -88,7 +88,7 @@ if ( ! class_exists( 'AffiliateWP_Multi_Level_Marketing' ) ) {
 			if ( ! isset( self::$instance ) && ! ( self::$instance instanceof AffiliateWP_Multi_Level_Marketing ) ) {
 				
 				self::$instance = new AffiliateWP_Multi_Level_Marketing;
-				self::$version  = '1.1.2';
+				self::$version  = '1.1.3';
 
 				self::$instance->setup_constants();
 				self::$instance->includes();
@@ -461,7 +461,11 @@ if ( ! class_exists( 'AffiliateWP_Multi_Level_Marketing' ) ) {
 				$referrals = $this->get_sub_affiliate_referrals();
 			}
 		
-			return count( $referrals );
+			$count = 0;
+			
+			if ( is_array( $referrals ) || is_object( $referrals ) ) $count = count( $referrals );
+			
+			return $count;
 		}
 
 		/**

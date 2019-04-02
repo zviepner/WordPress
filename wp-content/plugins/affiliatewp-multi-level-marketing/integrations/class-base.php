@@ -85,10 +85,11 @@ class AffiliateWP_MLM_Base {
 			return; // Prevent looping through indirect referrals
 		}
 		
+		$upline_max = apply_filters( 'affwp_mlm_indirect_level_max', 0, $affiliate_id );
 		$upline_basis = affiliate_wp()->settings->get( 'affwp_mlm_upline_basis' );
 		
 		// Get the affiliate's upline
-		$upline = affwp_mlm_get_upline( $affiliate_id, 0, $upline_basis );
+		$upline = affwp_mlm_get_upline( $affiliate_id, $upline_max, $upline_basis );
 		
 		if ( $upline ) {
 			
@@ -227,6 +228,30 @@ class AffiliateWP_MLM_Base {
 		
 		return apply_filters( 'affwp_mlm_level_rates', array_values( $rates ) );
 	}
+
+	/**
+	 * Get the Per-Product Rate for each Level
+	 *
+	 * @access public
+	 * @since 1.1.3
+	 * @return array
+	 */
+	public function get_product_level_rates( $product_id = 0 ) {
+		
+		if ( $this->context == 'woocommerce' ) {
+			$affwp_mlm_int = new AffiliateWP_MLM_WooCommerce;	
+		} else {
+			return array();
+		}
+		
+		$rates = $affwp_mlm_int->get_int_product_level_rates( $product_id );
+		$rates = is_array( $rates ) ? array_values( $rates ) : array();		
+		
+		// Match the level count by offseting array values to start from 1
+		array_unshift( $rates, '' );
+		
+		return apply_filters( 'affwp_mlm_product_level_rates', $rates );
+	}	
 	
 	/**
 	 * Get parent rate while tracking sub-affiliate
@@ -235,27 +260,43 @@ class AffiliateWP_MLM_Base {
 	 */
 	public function get_parent_rate( $parent_affiliate_id = 0, $product_id = 0, $level_count = 0, $args = array() ) {
 
-		// Should be used when the sub-affiliate has made a referral
-
+		$rate = 0; // The Default Indirect Rate
+		$product_rates = $this->get_product_level_rates( $product_id );
 		$rates = $this->get_level_rates();
 		
 		// 1. The per-affiliate setting in Affiliates -> Affiliates -> Edit
 		// $affiliate_level_rate = affiliate_wp()->affiliates->get_column( 'rate', $parent_affiliate_id );
 		
-		// 2. The global per level setting in Affiliates -> Settings -> MLM
-		$level_rate = $rates[ $level_count ]['rate'];
+		// 2. The per product setting for per level rates
+		$product_rate = isset( $product_rates[ $level_count ]['rate'] ) ? $product_rates[ $level_count ]['rate'] : 0;
 		
-		// 3. The global setting for all levels in Affiliates -> Settings -> MLM
+		// 3. The global per level setting in Affiliates -> Settings -> MLM
+		$level_rate = isset( $rates[ $level_count ]['rate'] ) ? $rates[ $level_count ]['rate'] : 0;
+		
+		// 4. The global setting for all levels in Affiliates -> Settings -> MLM
 		$mlm_rate = affiliate_wp()->settings->get( 'affwp_mlm_referral_rate' );
 
-		$rate = empty( $affiliate_level_rate ) ? $level_rate : $affiliate_level_rate;
+		// $rate = empty( $affiliate_level_rate ) ? $level_rate : $affiliate_level_rate;
+		
+		if ( isset( $product_rates[$level_count] ) ) {	
 
-		if ( empty( $rate ) ){
-			$rate = $mlm_rate;
+			// Use default rate if no per-level product rate is set
+			$rate = ! empty( $product_rate ) ? $product_rate : $rate;		
+		}
+		
+		if ( isset( $rates[$level_count] ) ) {	
+
+			// Use per-level rate if no per-level product rate is set
+			$rate = empty( $product_rate ) && ! empty( $level_rate ) ? $level_rate : $rate;
+		}		
+		
+		if ( isset( $mlm_rate ) ) {
+
+			// Use the global indirect rate if no per-level product rate or per-level rate is set
+			$rate = empty( $product_rate ) && empty( $level_rate ) && ! empty( $mlm_rate ) ? $mlm_rate : $rate;
 		}
 		
 		$reference = isset( $args['reference'] ) ? $args['reference'] : '';
-
 		$type = $this->get_parent_rate_type( $parent_affiliate_id, $product_id, $args = array( 'reference' => $reference ) );
 		
 		return apply_filters( 'affwp_mlm_get_affiliate_rate', (float) $rate, $product_id, $args, $this->affiliate_id, $this->context, $parent_affiliate_id, $level_count );

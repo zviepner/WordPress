@@ -3,7 +3,7 @@ Contributors: ramiabraham, sumobi
 Tags: AffiliateWP, affiliate, ecommerce, e-commerce, e commerce, selling, membership, mlm, multi-level, multi level marketing, referrals, marketing, affiliatewp, affiliates, woo, woocommerce, paid membership pro, paid memberships pro, memberpress, gravity forms
 Requires at least: 3.3
 Tested up to: 4.7.3
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,13 @@ Turn your Affiliate Network into a full blown Multi-Level Marketing system, wher
 == Upgrade Notice ==
 
 == Changelog ==
+
+
+= 1.1.3 =
+
+* NEW - WooCommerce Integration - Per-Level Product Rates
+* UPDATE - AffiliateWP Lifetime Commissions integration - Added compatibility for version 1.3+
+* FIX - AffiliateWP Lifetime Commissions integration - Errors during checkout.
 
 = 1.1.2 =
 

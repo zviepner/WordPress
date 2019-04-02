@@ -559,8 +559,19 @@ function affwp_mlm_sync_lifetime_to_mlm( $direct_affiliate_id = 0 ) {
 	// Make sure Lifetime to MLM syncing is enabled in the settings
 	if ( empty( $sync ) || $sync != 'lifetime' ) return $direct_affiliate_id;
 
-	$user_id = get_current_user_id();	
-	$lifetime_affiliate_id = get_user_meta( $user_id, 'affwp_lc_affiliate_id', true );
+	$user_id = get_current_user_id();
+	
+	// Check for Lifetime Commissions version 1.3+
+	$lc_version_1_3 = ( true === version_compare( AFFWP_LC_VERSION, '1.3', '>=' ) ) ? true : false;	
+	
+	if ( $lc_version_1_3 ) {
+		
+		$user = get_userdata( $user_id );
+		$email = $user->user_email;		
+	
+	}
+	
+	$lifetime_affiliate_id = ( $lc_version_1_3 ) ? get_affiliate_id_from_customer_email( $email ) : get_user_meta( $user_id, 'affwp_lc_affiliate_id', true );
 	$direct_affiliate_id = $lifetime_affiliate_id ? $lifetime_affiliate_id : $direct_affiliate_id;
 
 	return $direct_affiliate_id;
@@ -581,7 +592,10 @@ function affwp_mlm_sync_mlm_to_lifetime( $affiliate_id, $mlm_data ) {
 	// Make sure MLM to Lifetime syncing is enabled in the settings
 	if ( empty( $sync ) || $sync == 'lifetime' ) return;
 
-	$affwp_lc = affiliate_wp_lifetime_commissions();		
+	$affwp_lc = affiliate_wp_lifetime_commissions();
+	
+	// Check for Lifetime Commissions version 1.3+
+	$lc_version_1_3 = ( true === version_compare( AFFWP_LC_VERSION, '1.3', '>=' ) ) ? true : false;	
 
 	// Use the direct referring affiliate
 	if ( $sync == 'direct' ) $sync_affiliate_id = $mlm_data['direct_affiliate_id'];
@@ -591,27 +605,57 @@ function affwp_mlm_sync_mlm_to_lifetime( $affiliate_id, $mlm_data ) {
 
 	$current_user = wp_get_current_user();
 	$user_email = $current_user->user_email;
+	
+	if ( $lc_version_1_3 ) {
+		
+		// Exit if updated version of AffiliateWP is not active
+		if ( ! function_exists( 'affwp_get_customer' ) ) return;
+		
+		// Check for existing customer id			
+		$customer = affwp_get_customer( $user_email );
 
-	// Check for existing customer ids
-	if ( is_array( $affwp_lc->integrations->get_affiliates_customer_ids( $sync_affiliate_id ) ) ) {
+		if ( ! $customer ) {
 
-		// Add the customer's WordPress user ID to the affiliate if it doesn't already exist
-		$affwp_lc->integrations->maybe_add_customer_id_to_affiliate( $current_user->ID, $sync_affiliate_id );
+			$args = array(
+				'affiliate_id' => $referring_affiliate_id,
+				'first_name'   => $current_user->first_name,
+				'last_name'    => $current_user->last_name,
+				'user_id'      => $current_user->ID,
+				'email'        => $current_user->user_email,
+				'ip'           => affiliate_wp()->tracking->get_ip()
+			);
 
+			// Store the affiliate ID with the user.
+			affwp_add_customer( $args );
+
+		}		
+		
 	} else {
-		$affwp_lc->integrations->add_customer_id_to_affiliate( $user_id, $affiliate_id );
-	}
 
-	// Store the affiliate's ID against the user
-	$affwp_lc->integrations->add_affiliate_id_to_customer( $current_user->ID, $sync_affiliate_id );
+	$customers = $affwp_lc->integrations->get_affiliates_customer_ids( $sync_affiliate_id );		
+		
+		// Check for existing customer ids
+		if ( is_array( $customers ) ) {
 
-	// Check for existing customer ids
-	if ( is_array( $affwp_lc->integrations->get_affiliates_customer_emails( $sync_affiliate_id ) ) ) {
+			// Add the customer's WordPress user ID to the affiliate if it doesn't already exist
+			$affwp_lc->integrations->maybe_add_customer_id_to_affiliate( $current_user->ID, $sync_affiliate_id );
 
-		// Store the newly registered affiliate's email with the referring Affiliate
-		$affwp_lc->integrations->maybe_add_email_to_affiliate( $sync_affiliate_id, $user_email );
-	} else {
-		$affwp_lc->integrations->add_email_to_affiliate( $sync_affiliate_id, $user_email );
+		} else {
+			$affwp_lc->integrations->add_customer_id_to_affiliate( $user_id, $affiliate_id );
+		}
+
+		// Store the affiliate's ID against the user
+		$affwp_lc->integrations->add_affiliate_id_to_customer( $current_user->ID, $sync_affiliate_id );
+
+		// Check for existing customer ids
+		if ( is_array( $affwp_lc->integrations->get_affiliates_customer_emails( $sync_affiliate_id ) ) ) {
+
+			// Store the newly registered affiliate's email with the referring Affiliate
+			$affwp_lc->integrations->maybe_add_email_to_affiliate( $sync_affiliate_id, $user_email );
+		} else {
+			$affwp_lc->integrations->add_email_to_affiliate( $sync_affiliate_id, $user_email );
+		}		
+		
 	}
 
 }
@@ -629,7 +673,13 @@ function affwp_mlm_remove_lifetime_email_from_upline_referrals( $referral_id, $r
 	if ( $referral->custom != 'indirect' ) return;
 	
 	$affwp_lc = affiliate_wp_lifetime_commissions();
-	$customer_email = $affwp_lc->integrations->get( 'email', $reference, $referral->context );
+	
+	// Check for Lifetime Commissions version 1.3+
+	$lc_version_1_3 = ( true === version_compare( AFFWP_LC_VERSION, '1.3', '>=' ) ) ? true : false;
+	
+	if ( $lc_version_1_3 ) return; // Doesn't apply to Lifetime Commissions 1.3+ (No way to delete customer from list)
+	
+	$customer_email = ( $lc_version_1_3 ) ? $affwp_lc->integrations->get_email( $reference ) : $affwp_lc->integrations->get( 'email', $reference, $referral->context );
 	
 	// If we can't get the email address using the base class method, use the sub class method based on the context
 	if ( empty( $customer_email ) ) {
@@ -659,15 +709,16 @@ function affwp_mlm_remove_lifetime_email_from_upline_referrals( $referral_id, $r
 		if ( empty( $integration_class ) ) return;
 	
 		$integration_object = new $integration_class();
-		$customer_email = $integration_object->get( 'email', $reference, $referral->context );
+		$customer_email = ( $lc_version_1_3 ) ? $integration_object->get_email( $reference ) : $integration_object->get( 'email', $reference, $referral->context );
 	}
 	
 	if ( empty( $customer_email ) ) return;
 	
 	$affiliate_id = $referral->affiliate_id;
+	$customer_emails = ( $lc_version_1_3 ) ?  $affwp_lc->integrations->get_customers_for_affiliate( $sync_affiliate_id ): $affwp_lc->integrations->get_affiliates_customer_emails( $affiliate_id );	
 	
 	// Remove customer email if found in affiliate's customer email list
-	if ( in_array( $customer_email, $affwp_lc->integrations->get_affiliates_customer_emails( $affiliate_id ) ) ) {
+	if ( in_array( $customer_email, $customer_emails ) ) {
 		$affwp_lc->integrations->delete_customer_email_from_affiliate( $affiliate_id, $customer_email );
 	}	
 
