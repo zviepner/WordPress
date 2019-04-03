@@ -1,7 +1,7 @@
 <?php
 /*
   osapi-contacts.php
-  OneSaas Connect API 2.0.6.43 for WooCommerce v2.0.20
+  OneSaas Connect API 3.0.0.2 for WooCommerce v3.0.00
   http://www.onesaas.com
   Copyright (c) 2014 oneSaas
 */
@@ -28,7 +28,7 @@ function addContacts() {
 			foreach ( $user_query->results as $user ) {
 				$contact = $xml->AddChild('Contact');
 				$contact->addAttribute('id', $user->ID);
-				$contact->addAttribute('LastUpdated', $user_last_modified_before_array[$user->ID]);
+				//$contact->addAttribute('LastUpdated', $user_last_modified_before_array[$user->ID]);
 				$contact->FirstName = htmlspecialchars($user->get('first_name'));
 				$contact->LastName = htmlspecialchars($user->get('last_name'));
 				$contact->MobilePhone = $user->get('billing_phone');

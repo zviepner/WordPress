@@ -1,7 +1,7 @@
 <?php
 /*
   osapi-contacts.php
-  OneSaas Connect API 2.0.6.43 for WooCommerce v2.0.20
+  OneSaas Connect API 3.0.0.2 for WooCommerce v3.0.00
   http://www.onesaas.com
   Copyright (c) 2014 oneSaas
 */
@@ -52,8 +52,9 @@ function process_request() {
 		}
 
 		if ($OrderId != null) {
-			$order = new WC_Order();
-			if ($order->get_order($OrderId)) {
+			try{
+				$order = new WC_Order($OrderId);
+				if ($order->get_id() != NULL) {
 				$shipping_note = '';
 				if ($Date != '') {$shipping_note .= 'Date: ' . $Date . '<br>';}
 				if ($CarrierName != '') {$shipping_note .= 'CarrierName: ' . $CarrierName . '<br>';}
@@ -62,19 +63,21 @@ function process_request() {
 				if ($TrackingUrl != '') {$shipping_note .= 'TrackingUrl: <a href="' . $TrackingUrl . '">' . $TrackingUrl . '</a><br>';}
 				if ($Notes != '') {$shipping_note .= 'Notes: ' . $Notes . '<br>';}
 				if ($shipping_note != '') {$order->add_order_note($shipping_note);}				
-				if(is_plugin_active('woocommerce-shipment-tracking/shipment-tracking.php'))
-					{	
-						wc_st_add_tracking_number($OrderId, $TrackingCode, $CarrierName, $date_shipped = null, $custom_url = false);
-					}					
+				if ( function_exists( 'wc_st_add_tracking_number' ) ) {
+					wc_st_add_tracking_number((string)$OrderId, (string)$TrackingCode, (string)$CarrierName, null, (string)$TrackingUrl);
+				}				
 				try {			
 					$order->update_status('completed');
 					$xml->addChild('Success','Operation Succeeded.');					
 				} catch (Exception $e) {
 					$xml->addChild('Error','Error in updating order ' . $OrderId . '. Internal Exception: ' . $e->getMessage());
+					}
 				}
-			} else {
-				$xml->addChild('Error','Wrong Paramenters. OrderId = ' . $OrderId);
 			}
+			catch (Exception $e)
+			{
+				$xml->addChild('Error','Wrong Paramenters. OrderId = ' . $OrderId . '. Does not exist!!!');
+			} 
 		} else {
 			$xml->addChild('Error','Wrong Paramenters. OrderNumber = ' . $OrderNumber);
 		}

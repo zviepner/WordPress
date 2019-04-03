@@ -1,7 +1,7 @@
 <?php
 /*
   osapi-contacts.php
-  OneSaas Connect API 2.0.6.43 for WooCommerce v2.0.20
+  OneSaas Connect API 3.0.0.2 for WooCommerce v3.0.00
   http://www.onesaas.com
   Copyright (c) 2014 oneSaas
 */
@@ -64,20 +64,20 @@ function addSettings() {
 		$tax_rate_xml->IsCompound = ($tax_rate->tax_rate_compound=="0")?"false":"true";
 	}
 	
-	// Shipping Methods
+	/* Shipping Methods
 	$shipping_methods_xml = $xml->addChild('ShippingMethods');
-	$sm = new WC_Shipping();
+	$sm = $woocommerce->shipping;
 	foreach($sm->get_shipping_classes() as $shipping_method)
 	{
 		$shipping_method_xml = $shipping_methods_xml->addChild('ShippingMethod');
 		//$shipping_method_xml->Name = $shipping_method->title;
 		//$shipping_method_xml->Description = $shipping_method->description;
 		$shipping_method_xml->Obj = print_r($shipping_method,1);
-	}
+	}*/
 	
 	// Payment Methods
 	$payment_gateways_xml = $xml->addChild('PaymentGateways');
-	$pg = new WC_Payment_Gateways();
+	$pg =  $woocommerce->payment_gateways;
 	foreach($pg->get_available_payment_gateways() as $payment_gateway)
 	{
 		$payment_gateway_xml = $payment_gateways_xml->addChild('PaymentGateway');

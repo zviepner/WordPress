@@ -3,7 +3,7 @@
  * Plugin Name: OneSaas Connect
  * Description: OneSaas Connect exposes an API that allows OneSaas to integate with WooCommerce.
  * To allow OneSaas to connect to WooCommerce please Activate this plugin then configure it from Settings > OneSaas Connect menu.
- * Version: 2.0.6.43
+ * Version: 3.0.0.2
  * Author: OneSaas
  * Author URI: http://www.onesaas.com/
  * Copyright 2014 OneSaas (www.OneSaas.com, support@onesaas.com)

@@ -6,7 +6,7 @@ function os_init() {
 	//$PageSize = 100;
 	// Initialise XML Response
 	$xml = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><OneSaas></OneSaas>');	
-	$xml->addAttribute('Version', '2.0.6.43');
+	$xml->addAttribute('Version', '3.0.0.2');
 	readParameters();
 	sendHeaders();
 }
@@ -69,32 +69,6 @@ function xml_adopt($root, $new) {
         xml_adopt($node, $ch);
     }
 }
-/*
-function updateLastModified($objectType, $forceFull=false) {
-	checkCreateTable();
-	global $wpdb;
-	switch ($objectType) {
-		case 'customer':
-			$wpdb->query("SET SESSION group_concat_max_len = 1000000;");
-			$insert = "
-			INSERT INTO `" . $wpdb->prefix . "osapi_last_modified` (object_type, id, hash, last_modified_before) 
-			SELECT 'customer' as 'object_type', t.id, t.current_hash as 'hash', UTC_TIMESTAMP() as 'last_modified_before' FROM (
-			SELECT u.ID AS  'id', MD5( CONCAT_WS(  ',', u.user_email, u.user_status, u.display_name, GROUP_CONCAT( CONCAT_WS(  ',', um.meta_key, um.meta_value ) ) ) ) AS  'current_hash'
-			FROM  `" . $wpdb->prefix . "users` u
-			LEFT JOIN  `" . $wpdb->prefix . "usermeta` um ON u.ID = um.user_id
-			GROUP BY u.ID ) t
-			LEFT JOIN `" . $wpdb->prefix . "osapi_last_modified` olm on olm.id = t.ID
-			WHERE (olm.object_type='customer' or olm.object_type is null)
-			AND (olm.hash != t.current_hash or olm.hash is null)
-			ON DUPLICATE KEY UPDATE hash = t.current_hash, last_modified_before = UTC_TIMESTAMP();";
-			
-			$wpdb->query($insert);
-			
-		break;
-		default:
-		break;
-	}
-}*/
 
 function checkCreateTable() {
 	global $wpdb;
@@ -171,68 +145,24 @@ function get_rate_percent( $key_or_rate ) {
 
     return apply_filters( 'woocommerce_rate_percent', floatval( $tax_rate ) , $key );
 }
-function get_variations($product) {
 
-	    $available_variations = array();
+function get_variations($product) {
+		$available_variations = array();
 
 		foreach ( $product->get_children() as $child_id ) {
-
-			$variation = $product->get_child( $child_id );
+			$variation = wc_get_product( $child_id );
 
 			// Filter 'woocommerce_hide_invisible_variations' to optionally hide invisible variations (disabled variations and variations with empty price)
-			if ( apply_filters( 'woocommerce_hide_invisible_variations', false, $product->id ) && ! $variation->variation_is_visible() ) {
+			if ( apply_filters( 'woocommerce_hide_invisible_variations', false, $product->get_id(), $variation ) && ! $variation->variation_is_visible() ) {
 				continue;
 			}
 
-			$variation_attributes = $variation->get_variation_attributes();
-			$availability         = $variation->get_availability();
-			$availability_html    = empty( $availability['availability'] ) ? '' : '<p class="stock ' . esc_attr( $availability['class'] ) . '">' . wp_kses_post( $availability['availability'] ) . '</p>';
-			$availability_html    = apply_filters( 'woocommerce_stock_html', $availability_html, $availability['availability'], $variation );
-
-			if ( has_post_thumbnail( $variation->get_variation_id() ) ) {
-				$attachment_id = get_post_thumbnail_id( $variation->get_variation_id() );
-
-				$attachment    = wp_get_attachment_image_src( $attachment_id, apply_filters( 'single_product_large_thumbnail_size', 'shop_single' )  );
-				$image         = $attachment ? current( $attachment ) : '';
-
-				$attachment    = wp_get_attachment_image_src( $attachment_id, 'full'  );
-				$image_link    = $attachment ? current( $attachment ) : '';
-
-				$image_title   = get_the_title( $attachment_id );
-				$image_alt     = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true );
-			} else {
-				$image = $image_link = $image_title = $image_alt = '';
-			}
-
 			$available_variations[] = apply_filters( 'woocommerce_available_variation', array(
-				'variation_id'          => $child_id,
-				'variation_is_visible'  => $variation->variation_is_visible(),
-				'variation_is_active'   => $variation->variation_is_active(),
-				'is_purchasable'        => $variation->is_purchasable(),
-				'display_price'         => $variation->get_display_price(),
-				'display_regular_price' => $variation->get_display_price( $variation->get_regular_price() ),
-				'attributes'            => $variation_attributes,
-				'image_src'             => $image,
-				'image_link'            => $image_link,
-				'image_title'           => $image_title,
-				'image_alt'             => $image_alt,
-				'price_html'            => $variation->get_price() === "" || $product->get_variation_price( 'min' ) !== $product->get_variation_price( 'max' ) ? '<span class="price">' . $variation->get_price_html() . '</span>' : '',
-				'availability_html'     => $availability_html,
-				'sku'                   => $variation->get_sku(),
-				'weight'                => $variation->get_weight() . ' ' . esc_attr( get_option('woocommerce_weight_unit' ) ),
-				'dimensions'            => $variation->get_dimensions(),
-				'min_qty'               => 1,
-				'max_qty'               => $variation->backorders_allowed() ? '' : $variation->get_stock_quantity(),
-				'backorders_allowed'    => $variation->backorders_allowed(),
-				'is_in_stock'           => $variation->is_in_stock(),
-				'is_downloadable'       => $variation->is_downloadable() ,
-				'is_virtual'            => $variation->is_virtual(),
-				'is_sold_individually'  => $variation->is_sold_individually() ? 'yes' : 'no',
+					'variation_id'=> $variation->get_id()
 			), $product, $variation );
-		}
-
+			}			
 		return $available_variations;
-}
+	}
 
 function item_subtotal( $item, $inc_tax = false, $round = true ) {
         if ( $inc_tax ) {

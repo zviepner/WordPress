@@ -1,7 +1,7 @@
 <?php
 /*
   osapi-contacts.php
-  OneSaas Connect API 2.0.6.43 for WooCommerce v2.0.20
+  OneSaas Connect API 3.0.0.2 for WooCommerce v3.0.00
   http://www.onesaas.com
   Copyright (c) 2014 oneSaas
 */
@@ -22,32 +22,28 @@ function addProducts() {
 		$loop->the_post();
 		global $product;
 		
-		$lastModified = strtotime($product->get_post_data()->post_modified_gmt.'UTC');
+		$lastModified = strtotime($product->get_date_modified());
 		if ($lastModified<$LastUpdatedTime) {
 			break;
 		}
+		
 		$product_xml = $xml->AddChild('Product');
-		$product_xml->AddAttribute('Id', $product->id);
-		$product_xml->AddAttribute('LastUpdated', $product->get_post_data()->post_modified_gmt);
+		$product_xml->AddAttribute('Id', $product->get_id());
+		$product_xml->AddAttribute('LastUpdated', $product->get_date_modified());
 		$product_xml->AddAttribute('IsDeleted', 'false');
 		$product_xml->Code = getProductCode($product);
-		$product_xml->Name = xml_entities($product->get_title());
-		$primary_supplier = woocommerce_get_product_terms($product->id, 'pa_supplier', 'names');
-		$product_xml->PrimarySupplier = array_shift($primary_supplier);
-		$primary_manufacturer = woocommerce_get_product_terms($product->id, 'pa_manufacturer', 'names');
-		$product_xml->PrimaryManufacturer = array_shift($primary_manufacturer);
-		$product_xml->Description = xml_entities(strip_tags($product->get_post_data()->post_excerpt));
-		//$product_xml->IsActive = ($product->is_on_sale()=='1')?'true':'false';
+		$product_xml->Name = xml_entities($product->get_name());
+		$product_xml->Description = xml_entities(strip_tags($product->get_description()));
 		$product_xml->IsActive = 'true';
-		$product_xml->Url = admin_url() . 'post.php?post=' . $product->id . '&action=edit';
-		$product_xml->PublicUrl = $product->get_post_data()->guid;
-		$product_xml->IsInventoried = ($product->managing_stock()=='1')?'true':'false';
-		$product_xml->StockAtHand = $product->managing_stock()?$product->get_total_stock():null;
+		$product_xml->Url = admin_url() . 'post.php?post=' . $product->get_id() . '&action=edit';
+		$product_xml->PublicUrl = get_permalink($product->get_id());
+		$product_xml->IsInventoried = ($product->get_manage_stock()=='1')?'true':'false';
+		$product_xml->StockAtHand = $product->get_manage_stock()?$product->get_stock_quantity():null;
 		$product_xml->SalePrice = $product->get_price();
 		$weight = $product_xml->addChild('Weight', $product->get_weight());
 		$weight->AddAttribute('unit', 'kg');
 		// Dimensions
-		$dimensions = $product->get_dimensions();
+		$dimensions = wc_format_dimensions( $product->get_dimensions( false ) );
 		if (($dimensions != null) && ($dimensions != '')) {
 			$dimensions_array = explode( ' x ', $dimensions );
 			if (($dimensions_array!=null) && (is_array($dimensions_array)) && (sizeof($dimensions_array)==3)) {
@@ -60,9 +56,9 @@ function addProducts() {
 				$height->AddAttribute('unit', $unit);
 			}
 		}
-		$product_xml->Tags = strip_tags($product->get_tags());
+		$product_xml->Tags = strip_tags(wc_get_product_tag_list($product->get_id()));
 		$product_xml->Type = 'Product';
-		$cats = get_the_terms( $product->id, 'product_cat' );
+		$cats = get_the_terms( $product->get_id(), 'product_cat' );
 		if(!empty($cats))
 		{
 		$categories_xml = $product_xml->AddChild('Categories');
@@ -91,16 +87,16 @@ function addProducts() {
 				$combo_item_xml->Quantity = 1;
 			}
 		}
-		
 		if ($product->is_type('variable')) {
 			$masterCode = getProductCode($product);	
 			$variations = get_variations($product);
-			foreach($variations as $variation_id) {			
+			//var_dump($variations);
+			foreach($variations as $variation_id) {
 				$variation_xml = $xml->AddChild('Product');
-				$variation = $product->get_child($variation_id['variation_id']);
+				$variation = new WC_Product_Variation($variation_id['variation_id']);
 				$variationCode = getProductCode($variation);
-				$variation_xml->AddAttribute('Id', $variation_id['variation_id']);
-				$variation_xml->AddAttribute('LastUpdated', $variation->get_post_data()->post_modified_gmt);
+				$variation_xml->AddAttribute('Id', $variation->get_id());
+				$variation_xml->AddAttribute('LastUpdated', $variation->get_date_modified());
 				$variation_xml->AddAttribute('IsDeleted', 'false');	
 				// Variations have the same sku as master.  Adding id to differentiate, Otherwise leave variation SKU
 				if($masterCode !==  $variationCode)
@@ -112,23 +108,19 @@ function addProducts() {
 					$variation_xml->Code = $variationCode . '-' . $variation_id['variation_id'];	
 				}	
 				$variation_xml->MasterCode = $masterCode;
-				$variation_xml->Name = xml_entities($variation->get_title());
-				$PrimarySupplier = woocommerce_get_product_terms($variation->id, 'pa_supplier', 'names');
-				$variation_xml->PrimarySupplier = array_shift($PrimarySupplier);
-				$PrimaryManufacturer = woocommerce_get_product_terms($variation->id, 'pa_manufacturer', 'names');
-				$variation_xml->PrimaryManufacturer = array_shift($PrimaryManufacturer);
-				$product_xml->Description = xml_entities(strip_tags($product->get_post_data()->post_excerpt));
-				//$variation_xml->IsActive = ($variation->is_on_sale()=='1')?'true':'false';
-				$variation_xml->IsActive = 'true';
-				$variation_xml->Url = admin_url() . 'post.php?post=' . $product->id . '&action=edit';
-				$variation_xml->PublicUrl = $variation->get_post_data()->guid;
-				$variation_xml->IsInventoried = ($variation->managing_stock()=='1')?'true':'false';
-				$variation_xml->StockAtHand = $variation->managing_stock()?$variation->get_total_stock():null;
+				$variation_xml->Name = xml_entities($variation->get_name());
+				$variation_xml->Description = xml_entities(strip_tags($variation->get_description()));
+				$variation_xml->IsActive = ($variation->variation_is_active()=='1')?'true':'false';
+				$variation_xml->Url = admin_url() . 'post.php?post=' . $variation->get_id() . '&action=edit';
+				$variation_xml->PublicUrl = get_permalink($variation->get_id());
+				$variation_xml->IsInventoried = ($variation->get_manage_stock()=='1')?'true':'false';
+				$variation_xml->StockAtHand = $variation->get_manage_stock()?$variation->get_stock_quantity():null;
 				$variation_xml->SalePrice = $variation->get_price();//$variation['price_html'];
 				$weight = $variation_xml->addChild('Weight', $variation->get_weight());
 				$weight->AddAttribute('unit', 'kg');
 				// Dimensions
-				$dimensions = $variation->get_dimensions();
+				$dimensions = wc_format_dimensions( $variation->get_dimensions( false ) );
+				
 				if (($dimensions != null) && ($dimensions != '')) {
 					$dimensions_array = explode( ' x ', $dimensions );
 					if (($dimensions_array!=null) && (is_array($dimensions_array)) && (sizeof($dimensions_array)==3)) {
@@ -151,7 +143,7 @@ function addProducts() {
 						$option->Value = htmlspecialchars($attribute_value);
 					}
 				}
-				$cats = get_the_terms( $variation->id, 'product_cat' );				
+				$cats = get_the_terms( $variation->get_id(), 'product_cat' );				
 				if(!empty($cats))
 				{	
 				$categories_xml = $variation_xml->AddChild('Categories');				
@@ -171,24 +163,8 @@ function addProducts() {
 						}
 					}
 				}
-				//Add attribute custom fields
-				$attributes = $variation->get_attributes();	
-				if(!empty($attributes))
-				{				
-				$variation_xml = $variation_xml->AddChild('CustomFields');
-				foreach ( $attributes as $attribute ) {	
-					$pa_attr = explode("_", $attribute['name']);
-					if ($pa_attr[0] == 'pa') {
-						if($pa_attr[1] != 'manufacturer' && $pa_attr[1] != 'supplier')
-							{
-								$customfield_xml = $variation_xml->AddChild('CustomField',$variation->get_attribute( $attribute['name']));
-								$customfield_xml->AddAttribute('Name',$pa_attr[1]);
-							}
-						}
-					}
-				}
 				//Additional Custom Fields
-				$prod_meta = get_post_meta($variation->id);
+				$prod_meta = get_post_meta($variation->get_id());
 				foreach($prod_meta as $custom_meta => $custom_meta_value){
 					 if($custom_meta[0] == '_')
 					 {
@@ -204,25 +180,10 @@ function addProducts() {
 					 }
 				}				
 			}
-		}
-		//Add attribute custom fields
-		$attributes = $product->get_attributes();
-		if(!empty($attributes))
-		{			
-		$product_xml = $product_xml->AddChild('CustomFields');		
-		foreach ( $attributes as $attribute ) {	
-			$pa_attr = explode("_", $attribute['name']);
-			if ($pa_attr[0] == 'pa') {
-				if($pa_attr[1] != 'manufacturer' && $pa_attr[1] != 'supplier')
-					{
-						$customfield_xml = $product_xml->AddChild('CustomField',$product->get_attribute( $attribute['name']));
-						$customfield_xml->AddAttribute('Name',$pa_attr[1]);
-					}
-				}
-			}
-		}
+		}		
+		
 		//Additional Custom Fields
-		$prod_meta = get_post_meta($product->id);
+		$prod_meta = get_post_meta($product->get_id());
 		foreach($prod_meta as $custom_meta => $custom_meta_value){
 			 if($custom_meta[0] == '_')
 			 {

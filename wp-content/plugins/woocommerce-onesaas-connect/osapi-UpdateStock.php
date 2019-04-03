@@ -1,7 +1,7 @@
 <?php
 /*
   osapi-contacts.php
-  OneSaas Connect API 2.0.6.43 for WooCommerce v2.0.20
+  OneSaas Connect API 3.0.0.2 for WooCommerce v3.0.00
   http://www.onesaas.com
   Copyright (c) 2014 oneSaas
 */
@@ -37,7 +37,7 @@ function process_request() {
 				$product = $pf->get_product($stockUpdateRequest['ProductCode']);
 				
 				if ($product != null) {
-					$updated_stock = $product->set_stock(0.0 + $stockUpdateRequest['StockAvailable']);
+					$updated_stock = wc_update_product_stock( $product, $stockUpdateRequest['StockAvailable']);
 					$psu->addChild('Success','Operation Succeeded. New Stock ' . $updated_stock);
 				} else {
 					$psu->addChild('Error','Product id ' . $stockUpdateRequest['ProductCode'] . ' does not exists in Woocommerce');

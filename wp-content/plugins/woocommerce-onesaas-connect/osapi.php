@@ -1,7 +1,7 @@
 <?php
 /*
   osapi.php
-  OneSaas Connect API 2.0.6.43 for WooCommerce v2.0.20
+  OneSaas Connect API 3.0.0.2 for WooCommerce v3.0.00
   http://www.onesaas.com
   Copyright (c) 2014 oneSaas
 */
@@ -36,11 +36,6 @@ if (verifyApiKey()) {
 			include("osapi-products.php");
 			addProducts();
 		break;
-		
-		case "ProductById": 
-			include("osapi-productbyib.php");
-			addProductById();
-		break;	
 		
 		case "Orders":
 			include("osapi-orders.php");
