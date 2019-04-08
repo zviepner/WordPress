@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e
+class ComposerStaticInitdd99bdc714d3a0da336f7270f9054514
 {
     public static $files = array (
         'b45b351e6b6f7487d819961fef2fda77' => __DIR__ . '/..' . '/jakeasmith/http_build_url/src/http_build_url.php',
@@ -42,6 +42,7 @@ class ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e
     );
 
     public static $classMap = array (
+        'WCML_ATE_Activate_Synchronization' => __DIR__ . '/../..' . '/classes/ate/class-wcml-ate-activate-synchronization.php',
         'WCML_Accommodation_Bookings' => __DIR__ . '/../..' . '/compatibility/class-wcml-accommodation-bookings.php',
         'WCML_Admin_Cookie' => __DIR__ . '/../..' . '/classes/class-wcml-admin-cookie.php',
         'WCML_Admin_Currency_Selector' => __DIR__ . '/../..' . '/classes/currencies/class-wcml-admin-currency-selector.php',
@@ -209,7 +210,7 @@ class ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e
         'WCML_Upgrade' => __DIR__ . '/../..' . '/inc/class-wcml-upgrade.php',
         'WCML_Url_Filters_Redirect_Location' => __DIR__ . '/../..' . '/classes/url-filters/class-wcml-url-filters-redirect-location.php',
         'WCML_Url_Translation' => __DIR__ . '/../..' . '/inc/class-wcml-url-translation.php',
-        'WCML_Variation_Swatches_and_Photos' => __DIR__ . '/../..' . '/compatibility/class-wcml-variation-swatches-and-photos.php',
+        'WCML_Variation_Swatches_And_Photos' => __DIR__ . '/../..' . '/compatibility/class-wcml-variation-swatches-and-photos.php',
         'WCML_Vpc' => __DIR__ . '/../..' . '/compatibility/class-wcml-vpc.php',
         'WCML_W3TC_Multi_Currency' => __DIR__ . '/../..' . '/inc/currencies/class-wcml-w3tc-multi-currency.php',
         'WCML_WC_Admin_Duplicate_Product' => __DIR__ . '/../..' . '/inc/translation-editor/class-wcml-wc-admin-duplicate-product.php',
@@ -228,20 +229,23 @@ class ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e
         'WCML_Woo_Var_Table' => __DIR__ . '/../..' . '/compatibility/class-wcml-woo-var-table.php',
         'WCML_WpFastest_Cache' => __DIR__ . '/../..' . '/compatibility/class-wcml-wpfastest-cache.php',
         'WCML_Wpb_Vc' => __DIR__ . '/../..' . '/compatibility/class-wcml-wpb-vc.php',
+        'WCML_YIKES_Custom_Product_Tabs_Pro' => __DIR__ . '/../..' . '/compatibility/class-wcml-yikes-custom-product-tabs-pro.php',
         'WCML_YITH_WCQV' => __DIR__ . '/../..' . '/compatibility/class-wcml-yith-wcqv.php',
         'WCML_gravityforms' => __DIR__ . '/../..' . '/compatibility/class-wcml-gravityforms.php',
         'WCML_wcExporter' => __DIR__ . '/../..' . '/compatibility/class-wcml-wcexporter.php',
         'WCML_xDomain_Data' => __DIR__ . '/../..' . '/classes/urls/class-wcml-xdomain-data.php',
+        'WPML_Core_Version_Check' => __DIR__ . '/..' . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-core-version-check.php',
+        'WPML_Dependencies' => __DIR__ . '/..' . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-dependencies.php',
         'woocommerce_wpml' => __DIR__ . '/../..' . '/classes/class-woocommerce-wpml.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit4dd7b8af9819cda305271fc30af4e92e::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitdd99bdc714d3a0da336f7270f9054514::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitdd99bdc714d3a0da336f7270f9054514::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitdd99bdc714d3a0da336f7270f9054514::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInitdd99bdc714d3a0da336f7270f9054514::$classMap;
 
         }, null, ClassLoader::class);
     }

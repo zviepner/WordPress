@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'WCML_ATE_Activate_Synchronization' => $baseDir . '/classes/ate/class-wcml-ate-activate-synchronization.php',
     'WCML_Accommodation_Bookings' => $baseDir . '/compatibility/class-wcml-accommodation-bookings.php',
     'WCML_Admin_Cookie' => $baseDir . '/classes/class-wcml-admin-cookie.php',
     'WCML_Admin_Currency_Selector' => $baseDir . '/classes/currencies/class-wcml-admin-currency-selector.php',
@@ -173,7 +174,7 @@ return array(
     'WCML_Upgrade' => $baseDir . '/inc/class-wcml-upgrade.php',
     'WCML_Url_Filters_Redirect_Location' => $baseDir . '/classes/url-filters/class-wcml-url-filters-redirect-location.php',
     'WCML_Url_Translation' => $baseDir . '/inc/class-wcml-url-translation.php',
-    'WCML_Variation_Swatches_and_Photos' => $baseDir . '/compatibility/class-wcml-variation-swatches-and-photos.php',
+    'WCML_Variation_Swatches_And_Photos' => $baseDir . '/compatibility/class-wcml-variation-swatches-and-photos.php',
     'WCML_Vpc' => $baseDir . '/compatibility/class-wcml-vpc.php',
     'WCML_W3TC_Multi_Currency' => $baseDir . '/inc/currencies/class-wcml-w3tc-multi-currency.php',
     'WCML_WC_Admin_Duplicate_Product' => $baseDir . '/inc/translation-editor/class-wcml-wc-admin-duplicate-product.php',
@@ -192,9 +193,12 @@ return array(
     'WCML_Woo_Var_Table' => $baseDir . '/compatibility/class-wcml-woo-var-table.php',
     'WCML_WpFastest_Cache' => $baseDir . '/compatibility/class-wcml-wpfastest-cache.php',
     'WCML_Wpb_Vc' => $baseDir . '/compatibility/class-wcml-wpb-vc.php',
+    'WCML_YIKES_Custom_Product_Tabs_Pro' => $baseDir . '/compatibility/class-wcml-yikes-custom-product-tabs-pro.php',
     'WCML_YITH_WCQV' => $baseDir . '/compatibility/class-wcml-yith-wcqv.php',
     'WCML_gravityforms' => $baseDir . '/compatibility/class-wcml-gravityforms.php',
     'WCML_wcExporter' => $baseDir . '/compatibility/class-wcml-wcexporter.php',
     'WCML_xDomain_Data' => $baseDir . '/classes/urls/class-wcml-xdomain-data.php',
+    'WPML_Core_Version_Check' => $vendorDir . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-core-version-check.php',
+    'WPML_Dependencies' => $vendorDir . '/wpml-shared/wpml-lib-dependencies/src/dependencies/class-wpml-dependencies.php',
     'woocommerce_wpml' => $baseDir . '/classes/class-woocommerce-wpml.php',
 );

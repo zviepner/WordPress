@@ -49,6 +49,7 @@ class WCML_Products{
 		} else {
 			add_filter( 'woocommerce_json_search_found_products', array( $this, 'filter_found_products_by_language' ) );
 			add_filter( 'woocommerce_related_products_args', array( $this, 'filter_related_products_args' ) );
+			add_filter( 'woocommerce_product_related_posts_query', array( $this, 'filter_related_products_query' ) );
 			add_filter( 'woocommerce_shortcode_products_query', array(
 				$this,
 				'add_lang_to_shortcode_products_query'
@@ -72,6 +73,10 @@ class WCML_Products{
 		add_filter( 'get_product_search_form', array( $this->sitepress, 'get_search_form_filter' ) );
 
 		add_filter( 'woocommerce_pre_customer_bought_product', array( $this, 'is_customer_bought_product' ), 10, 4 );
+
+		if ( $this->sitepress->get_wp_api()->version_compare( $this->sitepress->get_wp_api()->constant( 'WC_VERSION' ), '3.6.0', '>=' ) ) {
+			add_filter( 'get_post_metadata', array( $this, 'filter_product_data' ), 10, 3 );
+		}
 	}
 
 	/**
@@ -204,7 +209,7 @@ class WCML_Products{
                     if( isset( $product_translations[ $language[ 'code' ] ] ) ) {
                         $job_id = $this->wpdb->get_var(
                                     $this->wpdb->prepare(
-                                        "SELECT tj.job_id FROM {$this->wpdb->prefix}icl_translate_job AS tj
+                                        "SELECT MAX(tj.job_id) FROM {$this->wpdb->prefix}icl_translate_job AS tj
                                          LEFT JOIN {$this->wpdb->prefix}icl_translation_status AS ts
                                          ON tj.rid = ts.rid WHERE ts.translation_id=%d",
                                         $product_translations[ $language[ 'code' ] ]->translation_id )
@@ -246,6 +251,8 @@ class WCML_Products{
                         wpml_tm_load_status_display_filter();
                     } ?>
                     <a href="<?php echo apply_filters( 'wpml_link_to_translation', '', $original_product_id, $language[ 'code' ], $trid ) ?>"
+                       class="js-wpml-translate-link"
+                       data-tm-job-id="<?php echo $job_id ?>"
                         <?php if( isset( $product_translations[ $language[ 'code' ] ] ) ){
                             $tr_status = $this->wpdb->get_row(
                                             $this->wpdb->prepare(
@@ -458,6 +465,19 @@ class WCML_Products{
         return $args;
     }
 
+	/**
+	 * @param array $query
+	 *
+	 * @return array
+	 */
+	public function filter_related_products_query( $query ) {
+
+		$query['join']  .= " LEFT JOIN {$this->wpdb->prefix}icl_translations AS icl ON icl.element_id = p.ID ";
+		$query['where'] .= $this->wpdb->prepare( " AND icl.language_code = %s ", $this->sitepress->get_current_language() );
+
+		return $query;
+	}
+
     /*
      * get meta ids for multiple values post meta key
      */
@@ -507,9 +527,10 @@ class WCML_Products{
         }elseif( isset( $_GET[ 'job_id' ] ) ){
 
             $job = $iclTranslationManagement->get_translation_job( $_GET[ 'job_id' ] );
-            $from_lang = $job->source_language_code;
-            $to_lang = $job->language_code;
-
+            if( $job ){
+	            $from_lang = $job->source_language_code;
+	            $to_lang = $job->language_code;
+            }
         }
 
         if( isset( $from_lang ) ){
@@ -649,5 +670,46 @@ class WCML_Products{
 
 	    return $value;
     }
+
+
+	public function filter_product_data( $data, $product_id, $meta_key ) {
+
+		if ( ! $meta_key && in_array( get_post_type( $product_id ), array( 'product', 'product_variation' ) ) ) {
+			remove_filter( 'get_post_metadata', array( $this, 'filter_product_data' ), 10 );
+
+			$data = get_post_meta( $product_id );
+
+			$is_mc_enabled = (int) $this->woocommerce_wpml->settings['enable_multi_currency'] === (int) $this->sitepress->get_wp_api()->constant( 'WCML_MULTI_CURRENCIES_INDEPENDENT' );
+
+			if ( $is_mc_enabled ) {
+				$price_keys = wcml_price_custom_fields( $product_id );
+			}
+
+			foreach ( $data as $meta_key => $meta_value ) {
+
+				$filtered_value = false;
+
+				if ( $is_mc_enabled && in_array( $meta_key, $price_keys, true ) ) {
+					$filtered_value = $this->woocommerce_wpml->multi_currency->prices->product_price_filter( null, $product_id, $meta_key, true );
+				} elseif ( in_array( $meta_key, array( '_wc_review_count', '_wc_average_rating' ), true ) ) {
+					$filtered_value = $this->woocommerce_wpml->comments->filter_average_rating( null, $product_id, $meta_key, true );
+				} elseif ( '_product_image_gallery' === $meta_key ) {
+					$factory        = new WCML_Product_Gallery_Filter_Factory();
+					$filtered_value = $factory->create()->localize_image_ids( null, $product_id, $meta_key );
+				} elseif ( '_thumbnail_id' === $meta_key ) {
+					$factory        = new WCML_Product_Image_Filter_Factory();
+					$filtered_value = $factory->create()->localize_image_id( null, $product_id, $meta_key );
+				}
+
+				if ( $filtered_value ) {
+					$data[ $meta_key ][0] = $filtered_value;
+				}
+			}
+
+			add_filter( 'get_post_metadata', array( $this, 'filter_product_data' ), 10, 3 );
+		}
+
+		return $data;
+	}
 
 }

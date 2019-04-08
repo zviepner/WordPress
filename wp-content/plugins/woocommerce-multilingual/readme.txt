@@ -4,8 +4,8 @@ Donate link: http://wpml.org/documentation/related-projects/woocommerce-multilin
 Tags: CMS, woocommerce, commerce, ecommerce, e-commerce, products, WPML, multilingual, e-shop, shop
 License: GPLv2
 Requires at least: 3.9
-Tested up to: 5.1
-Stable tag: 4.4.2.1
+Tested up to: 5.1.1
+Stable tag: 4.5.0
 
 Allows running fully multilingual e-commerce sites using WooCommerce and WPML.
 
@@ -140,6 +140,29 @@ WooCommerce Multilingual is compatible with all major WooCommerce extensions. We
 
 == Changelog ==
 
+= 4.5.0 =
+* Add "get_post_metadata" hook to filter Woocommerce product data
+* Added function in troubleshooting page to fix broken variations
+* Fix refreshing of status icon when ATE Job of updated content is synced
+* Fix few notices when removing a Elementor widget and refresh page
+* Fetch ATE translations from WCML Product Translation Tab
+* Fix warning when adding comment to product
+* Fixed wrong price calculation when adding product to new order on backend
+* Fixed bookings counter on admin bookings listing page
+* Fixed stock quantity not synchronized to translation when creating it
+* Fixed notice when saving translation
+* Fixed translated attributes via ATE/Translation service not connected to translated product
+* Fix not translated "On Hold" email subject after returning order from "Processing"
+* Remove unneded $_SESSION variables on checkout page
+* Fix PHP notice `Notice: Only variables should be passed by reference`
+* Implemented dependency check for minimum compatible versions of required WPML plugins
+* Fixed default variation not pre-selected on front-end for translated product with non latin attribute in default language
+* Fix cannot change currency with "wcml_client_currency" filter
+* Fixed not valid API key when trying manually update exchange rates
+* WooCommerce Variation Swatches and Photos compatibility to translate attributes
+* Fix related product displays in all languages
+* Added compatibility with Yikes Custom Product Tabs
+
 = 4.4.2.1 =
 * Fix error while updating product
 
@@ -162,7 +185,6 @@ WooCommerce Multilingual is compatible with all major WooCommerce extensions. We
 * Fix and removed duplicated entries in code
 * Hide reviews in other languages link, if there are no reviews in product
 * Update WCML Logo
-* Added support for wpml endpoints
 * Removed Product Type Column from WCML backend and added compatibility with the WC Product Type Column plugin
 * Fix low_stock_amount not synchronized to translations
 * Fix custom attribute with number in name not appears to translation in Translation editor
@@ -196,6 +218,7 @@ WooCommerce Multilingual is compatible with all major WooCommerce extensions. We
 * Fixed missed synchronization of 'outofstock' visibility term between product translations
 * Fix broken logic with Table Rate Shipping when product uses class with "break and abort" rule
 * Custom attributes terms not copied to diplicated translation after update values in original
+* Added support for wpml endpoints
 * WP Fastest Cache compatibility - fixed currency switcher problem
 * Added ability to set custom prices for secondary currencies in WC Product Add-Ons
 * Update minimum requirements
@@ -493,6 +516,9 @@ WooCommerce Multilingual is compatible with all major WooCommerce extensions. We
 * Fixed `Fatal error: Class ‘WPML_File’ not found` when using an old version of WPML
 * Fixed "Invalid or duplicated SKU" error when saving or updating a product with SKU
 * Fixed `Fatal error: Call to undefined function WC()` when disabling WooCommerce while WCML is running
+
+= 4.1.0 =
+* Fixed bookings issues
 
 = 4.1.0 =
 * Enhanced language switchers

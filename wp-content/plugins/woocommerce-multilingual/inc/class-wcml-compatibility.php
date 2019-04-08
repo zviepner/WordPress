@@ -69,7 +69,8 @@ class WCML_Compatibility {
 
 		// WooCommerce Variation Swatches and Photos
 		if ( class_exists( 'WC_SwatchesPlugin' ) ) {
-			$this->variation_sp = new WCML_Variation_Swatches_and_Photos();
+			$this->variation_sp = new WCML_Variation_Swatches_And_Photos( $this->sitepress );
+			$this->variation_sp->add_hooks();
 		}
 
 		// Product Add-ons
@@ -265,6 +266,12 @@ class WCML_Compatibility {
 		if ( class_exists( 'WC_Product_Type_Column' ) ) {
 			$this->wc_type_column = new WCML_WC_Product_Type_Column();
 			$this->wc_type_column->add_hooks();
+		}
+
+		// Custom Product Tabs PRO
+		if ( class_exists( 'YIKES_Custom_Product_Tabs_Pro' ) ) {
+			$this->custom_product_tabs = new WCML_YIKES_Custom_Product_Tabs_Pro( $this->woocommerce_wpml, $this->sitepress, $this->tp );
+			$this->custom_product_tabs->add_hooks();
 		}
 
 	}
