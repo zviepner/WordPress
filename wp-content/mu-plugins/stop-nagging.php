@@ -39,6 +39,10 @@ function stop_nagging_nags() {
     set_transient( 'affwp_license_notice', true, 1.8 * WEEK_IN_SECONDS );
   }
 
+  // Remove YITH promos
+  remove_action( 'admin_notices', 'yith_plugin_fw_promo_notices', 15 );
+  remove_action( 'admin_enqueue_scripts', 'yith_plugin_fw_notice_dismiss', 20 );
+
 }
 
 function stop_nagging_dashboard_widgets() {
